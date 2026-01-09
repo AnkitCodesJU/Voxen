@@ -57,7 +57,7 @@ function LoginContent() {
                                 placeholder=" "
                                 required
                             />
-                            <label className="absolute top-3 left-4 scale-75 transform text-sm text-zinc-400 duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-4 peer-focus:scale-75 origin-[0]">
+                            <label className="absolute top-3 left-4 scale-75 transform text-sm text-zinc-400 duration-200 -translate-y-4 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-4 peer-focus:scale-75 origin-[0]">
                                 Email or Username
                             </label>
                         </div>
@@ -71,7 +71,7 @@ function LoginContent() {
                                 placeholder=" "
                                 required
                             />
-                            <label className="absolute top-3 left-4 scale-75 transform text-sm text-zinc-400 duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-4 peer-focus:scale-75 origin-[0]">
+                            <label className="absolute top-3 left-4 scale-75 transform text-sm text-zinc-400 duration-200 -translate-y-4 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-4 peer-focus:scale-75 origin-[0]">
                                 Password
                             </label>
                         </div>
