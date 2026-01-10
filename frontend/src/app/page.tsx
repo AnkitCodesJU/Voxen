@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
 import VideoCard from "@/components/VideoCard";
 import api from "@/lib/axios";
 
@@ -13,16 +12,11 @@ export default function Home() {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        // Fetch public live classes
         const response = await api.get("/live-classes");
         if (response.data.success) {
           const allVideoData = response.data.data;
-
-          // Filter for Live vs Others
-          // Assuming 'status' field: 'LIVE', 'SCHEDULED', 'COMPLETED', 'CANCELLED'
           const live = allVideoData.filter((v: any) => v.status === "LIVE");
           const others = allVideoData.filter((v: any) => v.status !== "LIVE");
-
           setLiveClasses(live);
           setVodVideos(others);
         }
@@ -32,14 +26,12 @@ export default function Home() {
         setLoading(false);
       }
     };
-
     fetchClasses();
   }, []);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white">
-        <Navbar />
         <div className="flex items-center justify-center h-[calc(100vh-64px)]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
@@ -49,8 +41,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Navbar />
-
       {/* Live Classes Section */}
       {liveClasses.length > 0 && (
         <section className="mb-8 px-4 md:px-8 mt-4">
@@ -66,7 +56,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* Recommended Videos (Using other classes as VODs for now) */}
+      {/* Recommended Videos */}
       <section className="px-4 md:px-8 mt-4 mb-8">
         <h2 className="text-xl font-bold mb-4 text-white">Recommended / Upcoming</h2>
         {vodVideos.length > 0 ? (

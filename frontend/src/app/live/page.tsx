@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
 import VideoCard from "@/components/VideoCard";
 import api from "@/lib/axios";
 
@@ -32,7 +31,6 @@ export default function LiveClassPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-black text-white">
-                <Navbar />
                 <div className="flex items-center justify-center h-[calc(100vh-64px)]">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
                 </div>
@@ -42,7 +40,6 @@ export default function LiveClassPage() {
 
     return (
         <div className="min-h-screen">
-            <Navbar />
 
             <div className="space-y-12 px-8 pt-6"> {/* Added padding to match layout */}
                 {/* Live Now Section */}

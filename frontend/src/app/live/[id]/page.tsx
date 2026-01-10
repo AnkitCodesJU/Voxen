@@ -1,7 +1,5 @@
 "use client";
 
-import { useParameters } from "next/navigation";
-import Navbar from "@/components/Navbar";
 import LiveChat from "@/components/LiveChat";
 import { ThumbsUp, Share2, Disc } from "lucide-react";
 
@@ -11,7 +9,6 @@ export default function LiveRoomPage({ params }: { params: { id: string } }) {
 
     return (
         <div className="min-h-screen">
-            <Navbar />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content: Video Player */}

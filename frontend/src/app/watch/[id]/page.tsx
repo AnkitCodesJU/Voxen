@@ -1,6 +1,5 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
 import CommentSection from "@/components/CommentSection";
 import VideoCard from "@/components/VideoCard";
 import { ThumbsUp, ThumbsDown, Share2, MoreHorizontal } from "lucide-react";
@@ -20,7 +19,6 @@ const recommendations = Array.from({ length: 8 }).map((_, i) => ({
 export default function WatchPage({ params }: { params: { id: string } }) {
     return (
         <div className="min-h-screen">
-            <Navbar />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-0">
                 {/* Main Content */}

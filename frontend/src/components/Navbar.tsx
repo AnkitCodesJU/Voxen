@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Search, Bell, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -9,7 +10,9 @@ import { useAuth } from "@/context/AuthContext";
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const { isLoggedIn, logout } = useAuth();
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const { isLoggedIn, logout, user } = useAuth();
+    const pathname = usePathname();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -26,6 +29,8 @@ export default function Navbar() {
             window.removeEventListener("scroll", handleScroll);
         };
     }, []);
+
+    if (pathname === "/login" || pathname === "/register") return null;
 
     return (
         <nav
@@ -67,10 +72,38 @@ export default function Navbar() {
                             <div className="hidden sm:block text-gray-300 hover:text-white cursor-pointer">
                                 <Bell className="w-5 h-5" />
                             </div>
-                            <div className="flex items-center gap-2 cursor-pointer group" onClick={logout}>
-                                <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profile" className="w-full h-full object-cover" />
+                            <div className="flex items-center gap-2 cursor-pointer group relative">
+                                <div
+                                    className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden"
+                                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                >
+                                    {user?.avatar ? (
+                                        <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-white text-xs">{user?.fullName?.charAt(0) || "U"}</span>
+                                    )}
                                 </div>
+
+                                {userMenuOpen && (
+                                    <div className="absolute top-full right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded shadow-lg py-1 flex flex-col z-50">
+                                        <Link
+                                            href="/profile"
+                                            className="px-4 py-2 text-sm text-gray-300 hover:bg-zinc-800 hover:text-white transition"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        >
+                                            Profile
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                logout();
+                                                setUserMenuOpen(false);
+                                            }}
+                                            className="px-4 py-2 text-sm text-left text-red-500 hover:bg-zinc-800 hover:text-red-400 transition"
+                                        >
+                                            Logout
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </>
                     ) : (

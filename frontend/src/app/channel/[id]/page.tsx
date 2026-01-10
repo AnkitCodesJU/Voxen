@@ -1,6 +1,5 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
 import VideoCard from "@/components/VideoCard";
 
 const channelVideos = Array.from({ length: 8 }).map((_, i) => ({
@@ -17,7 +16,6 @@ const channelVideos = Array.from({ length: 8 }).map((_, i) => ({
 export default function ChannelPage({ params }: { params: { username: string } }) {
     return (
         <div className="min-h-screen">
-            <Navbar />
 
             {/* Banner */}
             <div className="h-40 md:h-60 w-full bg-gradient-to-r from-red-900 to-black relative">

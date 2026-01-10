@@ -53,29 +53,37 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(409, "User with email or username already exists")
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
+    const avatarLocalPath = req.files?.avatar?.[0]?.path;
     let coverImageLocalPath;
 
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path
     }
 
-    if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file is required")
+    // Remove mandatory check for avatarLocalPath
+    // if (!avatarLocalPath) {
+    //     throw new ApiError(400, "Avatar file is required")
+    // }
+
+    let avatarUrl = "";
+
+    if (avatarLocalPath) {
+        const avatar = await uploadOnCloudinary(avatarLocalPath)
+        if (!avatar) {
+            throw new ApiError(400, "Error while uploading avatar")
+        }
+        avatarUrl = avatar.url
+    } else {
+        // Use local default avatar
+        avatarUrl = `${req.protocol}://${req.get('host')}/default-avatar.svg`
     }
 
-    //Upload to cloudinary
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-
-    if (!avatar) {
-        throw new ApiError(400, "Avatar file is required")
-    }
 
     //create user object
     const user = await User.create({
         fullName,
-        avatar: avatar.url,
+        avatar: avatarUrl,
         coverImage: coverImage?.url || "",
         email, 
         password,
@@ -111,8 +119,11 @@ const loginUser = asyncHandler( async (req, res) => {
         throw new ApiError(400, "username or email is required")
     }
 
+    // Treat email or username as the login identifier
+    const identifier = username || email;
+
     const user = await User.findOne({
-        $or: [{ username }, { email }]
+        $or: [{ username: identifier }, { email: identifier }]
     })
 
     if (!user) {

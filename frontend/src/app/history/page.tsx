@@ -1,5 +1,5 @@
 "use client";
-import Navbar from "@/components/Navbar";
+"use client";
 import { useAuth } from "@/context/AuthContext";
 
 export default function HistoryPage() {
@@ -7,8 +7,7 @@ export default function HistoryPage() {
 
     return (
         <div className="min-h-screen bg-black text-white">
-            <Navbar />
-            <div className="pt-24 px-8">
+            <div className="px-8 mt-4">
                 <h1 className="text-3xl font-bold mb-4">Watch History</h1>
                 {isLoggedIn ? (
                     <p className="text-zinc-400">Your watch history will appear here.</p>
