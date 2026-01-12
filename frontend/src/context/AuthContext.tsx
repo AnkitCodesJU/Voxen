@@ -66,11 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const register = async (userData: FormData) => {
         try {
-            const response = await api.post("/users/register", userData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            const response = await api.post("/users/register", userData);
             if (response.data.success) {
                 // Auto login after register? Or just return success.
                 // Usually better to ask user to login or auto-login.

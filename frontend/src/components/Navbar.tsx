@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, Bell, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -11,8 +11,11 @@ export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     const { isLoggedIn, logout, user } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -64,8 +67,40 @@ export default function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <div className="hidden sm:block text-gray-300 hover:text-white cursor-pointer">
-                        <Search className="w-5 h-5" />
+                    <div className="hidden sm:flex items-center">
+                        {isSearchOpen ? (
+                            <div className="flex items-center bg-black/50 border border-gray-600 rounded px-2 py-1 mr-4 transition-all duration-300">
+                                <Search className="w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Titles, people, genres"
+                                    className="bg-transparent border-none focus:outline-none text-white text-sm ml-2 w-48"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && searchQuery.trim()) {
+                                            router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                                            setIsSearchOpen(false); // Optional: close after search
+                                        }
+                                    }}
+                                    autoFocus
+                                />
+                                <X
+                                    className="w-4 h-4 text-gray-400 cursor-pointer hover:text-white"
+                                    onClick={() => {
+                                        setIsSearchOpen(false);
+                                        setSearchQuery("");
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <div
+                                className="text-gray-300 hover:text-white cursor-pointer mr-6"
+                                onClick={() => setIsSearchOpen(true)}
+                            >
+                                <Search className="w-5 h-5" />
+                            </div>
+                        )}
                     </div>
                     {isLoggedIn ? (
                         <>

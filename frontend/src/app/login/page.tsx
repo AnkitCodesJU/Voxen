@@ -26,9 +26,10 @@ function LoginContent() {
             await login(formData);
             const redirectUrl = searchParams.get('redirect_url') || '/';
             router.push(redirectUrl);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Login failed. Please check your credentials.");
+            const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";
+            alert(errorMessage);
             setLoading(false);
         }
     };
@@ -94,7 +95,7 @@ function LoginContent() {
                         <label className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
                             <input type="checkbox" className="rounded border-white/20 bg-white/5 text-primary focus:ring-primary" /> Remember me
                         </label>
-                        <Link href="#" className="hover:text-primary transition-colors">Forgot Password?</Link>
+                        <Link href="/forgot-password" className="hover:text-primary transition-colors">Forgot Password?</Link>
                     </div>
                 </form>
 
