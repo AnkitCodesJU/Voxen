@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefreshTokens = async(userId) =>{
     try {
@@ -516,6 +516,36 @@ const resetPassword = asyncHandler(async(req, res) => {
     }
 });
 
+const addToWatchHistory = asyncHandler(async(req, res) => {
+    const { videoId } = req.params
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid videoId")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $addToSet: {
+                watchHistory: videoId
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user.watchHistory,
+            "Added to watch history"
+        )
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -529,5 +559,6 @@ export {
     getUserChannelProfile,
     getWatchHistory,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    addToWatchHistory
 }

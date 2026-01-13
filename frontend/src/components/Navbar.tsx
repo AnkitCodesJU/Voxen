@@ -128,6 +128,13 @@ export default function Navbar() {
                                         >
                                             Profile
                                         </Link>
+                                        <Link
+                                            href="/dashboard"
+                                            className="px-4 py-2 text-sm text-gray-300 hover:bg-zinc-800 hover:text-white transition"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        >
+                                            Your Content
+                                        </Link>
                                         <button
                                             onClick={() => {
                                                 logout();

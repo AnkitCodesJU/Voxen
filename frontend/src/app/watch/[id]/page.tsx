@@ -1,73 +1,144 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import CommentSection from "@/components/CommentSection";
 import VideoCard from "@/components/VideoCard";
 import { ThumbsUp, ThumbsDown, Share2, MoreHorizontal } from "lucide-react";
+import api from "@/lib/axios";
+import { formatDistanceToNow } from "date-fns";
 
-// Mock recommendations
-const recommendations = Array.from({ length: 8 }).map((_, i) => ({
-    id: `rec-${i}`,
-    title: `Recommended Video Title ${i + 1}`,
-    thumbnail: `https://picsum.photos/seed/rec${i}/1280/720`,
-    channelName: "Recommended Channel",
-    channelAvatar: `https://picsum.photos/seed/avatar_rec${i}/200/200`,
-    views: Math.floor(Math.random() * 50000),
-    uploadedAt: new Date(),
-    duration: "12:45"
-}));
+export default function WatchPage() {
+    const params = useParams();
+    const videoId = params?.id as string;
 
-export default function WatchPage({ params }: { params: { id: string } }) {
+    const [video, setVideo] = useState<any>(null);
+    const [recommendations, setRecommendations] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [isSubscribed, setIsSubscribed] = useState(false);
+    const [subscribersCount, setSubscribersCount] = useState(0);
+    const [likesCount, setLikesCount] = useState(0);
+    const [isLiked, setIsLiked] = useState(false);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!videoId) return;
+            setLoading(true);
+            try {
+                // Fetch Video Details
+                const videoRes = await api.get(`/videos/${videoId}`);
+                const videoData = videoRes.data.data;
+                setVideo(videoData);
+
+                // Set states from video data
+                setLikesCount(videoData.likesCount || 0);
+                setIsLiked(videoData.isLiked || false);
+                setIsSubscribed(videoData.owner?.isSubscribed || false);
+                setSubscribersCount(videoData.owner?.subscribersCount || 0);
+
+                // Recommendations
+                const recsRes = await api.get("/videos");
+                const allVideos = recsRes.data.data.docs || [];
+                setRecommendations(allVideos.filter((v: any) => v._id !== videoId));
+
+                // Add to watch history
+                await api.post(`/users/history/${videoId}`);
+
+            } catch (err) {
+                console.error("Error fetching video data", err);
+                setError("Failed to load video");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [videoId]);
+
+    const handleSubscribe = async () => {
+        if (!video?.owner?._id) return;
+        try {
+            const res = await api.post(`/subscriptions/c/${video.owner._id}`);
+            setIsSubscribed(res.data.data.subscribed);
+            setSubscribersCount(prev => res.data.data.subscribed ? prev + 1 : prev - 1);
+        } catch (error) {
+            console.error("Error toggling subscription", error);
+        }
+    };
+
+    const handleLike = async () => {
+        try {
+            const res = await api.post(`/likes/toggle/v/${videoId}`);
+            const newIsLiked = res.data.data.isLiked;
+            setIsLiked(newIsLiked);
+            setLikesCount(prev => newIsLiked ? prev + 1 : prev - 1);
+        } catch (error) {
+            console.error("Error toggling like", error);
+        }
+    };
+
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
+    if (error || !video) return <div className="min-h-screen bg-black flex items-center justify-center text-red-500">{error || "Video not found"}</div>;
+
     return (
-        <div className="min-h-screen">
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-0">
+        <div className="min-h-screen bg-black p-4 md:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content */}
                 <div className="lg:col-span-2">
                     {/* Player */}
                     <div className="aspect-video w-full bg-black rounded-xl overflow-hidden shadow-2xl relative mb-4">
-                        <img
-                            src="https://images.unsplash.org/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop"
-                            alt="Video Placeholder"
-                            className="w-full h-full object-cover"
-                        />
-                        {/* Fake Play Button Overlay */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/40 cursor-pointer">
-                            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center pl-1 shadow-lg">
-                                <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[20px] border-l-white border-b-[10px] border-b-transparent"></div>
-                            </div>
-                        </div>
+                        <video
+                            src={video.videoFile}
+                            poster={video.thumbnail}
+                            controls
+                            autoPlay
+                            className="w-full h-full object-contain"
+                        >
+                            Your browser does not support the video tag.
+                        </video>
                     </div>
 
                     {/* Title & Info */}
-                    <h1 className="text-xl font-bold text-white mb-2">Building a Full Stack Clone with Next.js 15 & Express</h1>
+                    <h1 className="text-xl font-bold text-white mb-2">{video.title}</h1>
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-full bg-zinc-700 overflow-hidden">
-                                <img src="https://picsum.photos/seed/channel_main/200/200" alt="Channel" />
+                                <img
+                                    src={video.owner?.avatar || "https://picsum.photos/200/200"}
+                                    alt={video.owner?.fullName}
+                                    className="w-full h-full object-cover"
+                                />
                             </div>
                             <div>
-                                <h3 className="font-bold text-white">CodeMaster</h3>
-                                <p className="text-xs text-zinc-400">500K Subscribers</p>
+                                <h3 className="font-bold text-white">{video.owner?.fullName || "Unknown Channel"}</h3>
+                                <p className="text-xs text-zinc-400">{subscribersCount} Subscribers</p>
                             </div>
-                            <button className="bg-white text-black font-bold px-4 py-2 rounded-full hover:bg-zinc-200 transaction">
-                                Subscribe
+                            <button
+                                onClick={handleSubscribe}
+                                className={`px-4 py-2 rounded-full font-bold transition ${isSubscribed ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-white text-black hover:bg-zinc-200'}`}
+                            >
+                                {isSubscribed ? 'Subscribed' : 'Subscribe'}
                             </button>
                         </div>
 
                         <div className="flex items-center gap-2">
                             <div className="flex items-center bg-zinc-800 rounded-full">
-                                <button className="flex items-center gap-2 hover:bg-zinc-700 px-4 py-2 rounded-l-full border-r border-zinc-700 font-bold text-sm">
-                                    <ThumbsUp className="w-4 h-4" /> 15K
+                                <button
+                                    onClick={handleLike}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-l-full border-r border-zinc-700 font-bold text-sm ${isLiked ? 'text-blue-500' : 'text-white hover:bg-zinc-700'}`}
+                                >
+                                    <ThumbsUp className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} /> {likesCount > 0 ? likesCount : "Like"}
                                 </button>
-                                <button className="hover:bg-zinc-700 px-4 py-2 rounded-r-full">
+                                <button className="hover:bg-zinc-700 px-4 py-2 rounded-r-full text-white">
                                     <ThumbsDown className="w-4 h-4" />
                                 </button>
                             </div>
-                            <button className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full font-bold text-sm">
+                            <button className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full font-bold text-sm text-white">
                                 <Share2 className="w-4 h-4" /> Share
                             </button>
-                            <button className="bg-zinc-800 hover:bg-zinc-700 p-2 rounded-full">
+                            <button className="bg-zinc-800 hover:bg-zinc-700 p-2 rounded-full text-white">
                                 <MoreHorizontal className="w-5 h-5" />
                             </button>
                         </div>
@@ -76,32 +147,45 @@ export default function WatchPage({ params }: { params: { id: string } }) {
                     {/* Description */}
                     <div className="mt-4 bg-zinc-900/50 p-4 rounded-xl cursor-pointer hover:bg-zinc-900 transition">
                         <div className="flex gap-2 text-sm font-bold text-white mb-2">
-                            <span>156K views</span>
+                            <span>{video.views} views</span>
                             <span>•</span>
-                            <span>14 hours ago</span>
+                            <span>{video.createdAt ? formatDistanceToNow(new Date(video.createdAt), { addSuffix: true }) : ''}</span>
                         </div>
                         <p className="text-sm text-white whitespace-pre-line">
-                            In this video, we will build a complete clone using the latest technologies.
-                            We will cover Backend, Frontend, Live Streaming, and much more!
-
-                            Timestamps:
-                            0:00 Intro
-                            2:30 Backend Setup
-                            ...more
+                            {video.description}
                         </p>
                     </div>
 
                     {/* Comments */}
-                    <CommentSection videoId={params.id} />
+                    <CommentSection videoId={videoId as string} />
                 </div>
 
                 {/* Recommendations Sidebar */}
                 <div className="lg:col-span-1 space-y-4">
                     {recommendations.map((rec) => (
-                        <VideoCard key={rec.id} {...rec} />
+                        <VideoCard
+                            key={rec._id}
+                            _id={rec._id}
+                            title={rec.title}
+                            thumbnail={rec.thumbnail}
+                            channelName={rec.owner?.fullName}
+                            channelAvatar={rec.owner?.avatar}
+                            channelId={rec.owner?._id}
+                            views={rec.views}
+                            createdAt={rec.createdAt}
+                            duration={formatDuration(rec.duration)}
+                        />
                     ))}
                 </div>
             </div>
         </div>
     );
+}
+
+// Helper to format duration (if stored as seconds in number, which it is in video.controller)
+function formatDuration(seconds: number) {
+    if (!seconds) return "00:00";
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec < 10 ? '0' + sec : sec}`;
 }

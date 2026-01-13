@@ -9,15 +9,16 @@ interface VideoCardProps {
     _id?: string; // Backend uses _id
     title: string;
     thumbnail: string;
-    channelName?: string; // Optional as backend might not populate this deeply yet
+    channelName?: string;
     channelAvatar?: string;
+    channelId?: string; // New prop for dynamic link
     views?: number;
-    uploadedAt?: Date; // Backend usage
-    createdAt?: string; // Backend usage
+    uploadedAt?: Date;
+    createdAt?: string;
     duration?: string;
     isLive?: boolean;
     description?: string;
-    instructor?: any; // To handle populated instructor
+    instructor?: any;
 }
 
 export default function VideoCard({
@@ -27,6 +28,7 @@ export default function VideoCard({
     thumbnail,
     channelName,
     channelAvatar,
+    channelId,
     views = 0,
     uploadedAt,
     createdAt,
@@ -40,14 +42,16 @@ export default function VideoCard({
     const videoId = _id || id || "";
     const displayChannelName = channelName || instructor?.fullName || "Instructor";
     const displayAvatar = channelAvatar || instructor?.avatar || "https://picsum.photos/seed/avatar1/200/200";
+    const displayChannelId = channelId || instructor?._id || "";
+
     const date = uploadedAt || (createdAt ? new Date(createdAt) : new Date());
 
     // Determine target URL:
-    // If Live and NOT logged in -> Login page with redirect
-    // Else -> Direct link
     const targetUrl = isLive && !isLoggedIn
         ? `/login?redirect_url=/live/${videoId}`
         : (isLive ? `/live/${videoId}` : `/watch/${videoId}`);
+
+    const channelUrl = displayChannelId ? `/channel/${displayChannelId}` : "#";
 
     return (
         <div className="flex flex-col gap-3 group cursor-pointer w-full">
@@ -73,10 +77,10 @@ export default function VideoCard({
             {/* Info Section */}
             <div className="flex gap-3 items-start">
                 {/* Avatar */}
-                <Link href={`/channel/codemaster`} className="flex-shrink-0">
+                <Link href={channelUrl} className="flex-shrink-0">
                     <img
-                        src={channelAvatar}
-                        alt={channelName}
+                        src={displayAvatar}
+                        alt={displayChannelName}
                         className="h-9 w-9 rounded-full object-cover border border-zinc-700"
                     />
                 </Link>
@@ -88,8 +92,8 @@ export default function VideoCard({
                             {title}
                         </h3>
                     </Link>
-                    <Link href={`/channel/codemaster`} className="text-xs text-zinc-400 mt-1 hover:text-white transition-colors">
-                        {channelName}
+                    <Link href={channelUrl} className="text-xs text-zinc-400 mt-1 hover:text-white transition-colors">
+                        {displayChannelName}
                     </Link>
                     <div className="text-xs text-zinc-400">
                         {views.toLocaleString()} views • {formatDistanceToNow(date, { addSuffix: true })}
