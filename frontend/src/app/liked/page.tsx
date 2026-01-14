@@ -54,6 +54,7 @@ export default function LikedVideosPage() {
                                 views={video.views}
                                 createdAt={video.createdAt}
                                 duration={formatDuration(video.duration)}
+                                videoFile={video.videoFile} // Pass video file for download
                             />
                         ))}
                     </div>

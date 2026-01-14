@@ -13,7 +13,9 @@ import {
     getWatchHistory,
     forgotPassword,
     resetPassword,
-    addToWatchHistory
+    addToWatchHistory,
+    toggleWatchLater,
+    getWatchLater
 } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -52,5 +54,7 @@ router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updat
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
 router.route("/history").get(verifyJWT, getWatchHistory)
 router.route("/history/:videoId").post(verifyJWT, addToWatchHistory)
+router.route("/watch-later").get(verifyJWT, getWatchLater)
+router.route("/watch-later/:videoId").post(verifyJWT, toggleWatchLater)
 
 export default router

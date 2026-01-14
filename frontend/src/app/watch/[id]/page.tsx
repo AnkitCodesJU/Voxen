@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import CommentSection from "@/components/CommentSection";
 import VideoCard from "@/components/VideoCard";
-import { ThumbsUp, ThumbsDown, Share2, MoreHorizontal } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Share2, MoreHorizontal, Clock, Download } from "lucide-react";
 import api from "@/lib/axios";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
 
 export default function WatchPage() {
+    const { isLoggedIn } = useAuth(); // Needed for Watch Later check
     const params = useParams();
     const videoId = params?.id as string;
 
@@ -20,6 +22,7 @@ export default function WatchPage() {
     const [subscribersCount, setSubscribersCount] = useState(0);
     const [likesCount, setLikesCount] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -43,7 +46,13 @@ export default function WatchPage() {
                 setRecommendations(allVideos.filter((v: any) => v._id !== videoId));
 
                 // Add to watch history
-                await api.post(`/users/history/${videoId}`);
+                // Only if logged in? Backend seems to use user from req, so might fail if not loggedIn
+                // But the page is likely protected or endpoint handles unauthorized gracefully?
+                // For now, let's wrap in try/catch silently or check isLoggedIn from context if we move it there.
+                // Assuming api handles token injection.
+                if (localStorage.getItem('accessToken')) {
+                    await api.post(`/users/history/${videoId}`);
+                }
 
             } catch (err) {
                 console.error("Error fetching video data", err);
@@ -78,11 +87,35 @@ export default function WatchPage() {
         }
     };
 
+    const handleWatchLater = async () => {
+        if (!isLoggedIn) {
+            alert("Please login to add to Watch Later");
+            return;
+        }
+        try {
+            await api.post(`/users/watch-later/${videoId}`);
+            alert("Added/Removed from Watch Later"); // Ideally use a toast
+            setShowMenu(false);
+        } catch (error) {
+            console.error("Error toggling watch later", error);
+            alert("Failed to update Watch Later");
+        }
+    };
+
+    const handleDownload = () => {
+        if (video?.videoFile) {
+            window.open(video.videoFile, '_blank');
+        } else {
+            alert("Download unavailable for this video.");
+        }
+        setShowMenu(false);
+    };
+
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
     if (error || !video) return <div className="min-h-screen bg-black flex items-center justify-center text-red-500">{error || "Video not found"}</div>;
 
     return (
-        <div className="min-h-screen bg-black p-4 md:p-8">
+        <div className="min-h-screen bg-black p-4 md:p-8" onClick={() => setShowMenu(false)}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content */}
                 <div className="lg:col-span-2">
@@ -123,7 +156,7 @@ export default function WatchPage() {
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 relative">
                             <div className="flex items-center bg-zinc-800 rounded-full">
                                 <button
                                     onClick={handleLike}
@@ -138,9 +171,36 @@ export default function WatchPage() {
                             <button className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full font-bold text-sm text-white">
                                 <Share2 className="w-4 h-4" /> Share
                             </button>
-                            <button className="bg-zinc-800 hover:bg-zinc-700 p-2 rounded-full text-white">
-                                <MoreHorizontal className="w-5 h-5" />
-                            </button>
+
+                            <div className="relative">
+                                <button
+                                    className="bg-zinc-800 hover:bg-zinc-700 p-2 rounded-full text-white"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowMenu(!showMenu);
+                                    }}
+                                >
+                                    <MoreHorizontal className="w-5 h-5" />
+                                </button>
+                                {showMenu && (
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleWatchLater(); }}
+                                            className="w-full text-left px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white flex items-center gap-3 transition-colors"
+                                        >
+                                            <Clock className="w-4 h-4" />
+                                            <span>Watch Later</span>
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                                            className="w-full text-left px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white flex items-center gap-3 border-t border-zinc-800 transition-colors"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            <span>Download</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 

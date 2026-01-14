@@ -546,6 +546,99 @@ const addToWatchHistory = asyncHandler(async(req, res) => {
     )
 })
 
+const toggleWatchLater = asyncHandler(async(req, res) => {
+    const { videoId } = req.params
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid videoId")
+    }
+
+    const user = await User.findById(req.user._id)
+    
+    // Check if video is already in watchLater
+    const isAdded = user.watchLater.includes(videoId)
+
+    if (isAdded) {
+        // Remove
+        await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $pull: {
+                    watchLater: videoId
+                }
+            },
+            { new: true }
+        )
+        return res.status(200).json(new ApiResponse(200, { added: false }, "Removed from Watch Later"))
+    } else {
+        // Add
+        await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $addToSet: {
+                    watchLater: videoId
+                }
+            },
+            { new: true }
+        )
+        return res.status(200).json(new ApiResponse(200, { added: true }, "Added to Watch Later"))
+    }
+})
+
+const getWatchLater = asyncHandler(async(req, res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchLater",
+                foreignField: "_id",
+                as: "watchLater",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchLater,
+            "Watch Later list fetched successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -560,5 +653,7 @@ export {
     getWatchHistory,
     forgotPassword,
     resetPassword,
-    addToWatchHistory
+    addToWatchHistory,
+    toggleWatchLater,
+    getWatchLater
 }
