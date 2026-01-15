@@ -42,6 +42,15 @@ const getAllVideos = asyncHandler(async (req, res) => {
     // For general feed:
     pipeline.push({ $match: { isPublished: true } });
 
+    // Filter by isMovie if query param is provided
+    if (req.query.isMovie !== undefined) {
+        pipeline.push({
+            $match: {
+                isMovie: req.query.isMovie === 'true'
+            }
+        });
+    }
+
 
     // Sort
     if (sortBy && sortType) {
@@ -97,7 +106,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
-    const { title, description } = req.body
+    const { title, description, isMovie, isPublished } = req.body
     
     if (
         [title, description].some((field) => field?.trim() === "")
@@ -133,7 +142,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
         videoFile: videoFile.url,
         thumbnail: thumbnail.url,
         duration: videoFile.duration,
-        owner: req.user._id
+        owner: req.user._id,
+        isMovie: isMovie === 'true' || isMovie === true, // Handle string 'true' from FormData
+        isPublished: isPublished === undefined ? true : (isPublished === 'true' || isPublished === true)
     })
 
     const createdVideo = await Video.findById(video._id)

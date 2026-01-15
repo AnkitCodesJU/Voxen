@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { LiveClass } from "../models/liveClass.model.js";
+import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
@@ -93,8 +94,21 @@ const endLiveClass = asyncHandler(async (req, res) => {
     liveClass.status = "COMPLETED";
     await liveClass.save();
 
+    // Archive as Video
+    // Since we don't have a real recording, we use placeholders or previous data
+    await Video.create({
+        videoFile: "https://res.cloudinary.com/demo/video/upload/v1631234567/sample_recording.mp4", // Placeholder for demo
+        thumbnail: liveClass.thumbnail || "https://res.cloudinary.com/demo/image/upload/v1631234567/sample_thumb.jpg",
+        title: `[Recorded] ${liveClass.title}`,
+        description: liveClass.description || "Recorded live class",
+        duration: 3600, // Placeholder duration 1hr
+        owner: req.user._id,
+        isPublished: true, // Default to public as per "recorded as a normal video" implication, but user can change later
+        isMovie: false
+    });
+
     return res.status(200).json(
-        new ApiResponse(200, liveClass, "Live Class Ended")
+        new ApiResponse(200, liveClass, "Live Class Ended and Recorded")
     );
 });
 

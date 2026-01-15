@@ -6,6 +6,13 @@ const tweetSchema = new Schema(
             type: String,
             required: true
         },
+        image: {
+            type: String // cloudinary url
+        },
+        isPublished: {
+            type: Boolean,
+            default: true
+        },
         owner: {
             type: Schema.Types.ObjectId,
             ref: "User"
