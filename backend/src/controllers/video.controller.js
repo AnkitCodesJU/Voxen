@@ -1,4 +1,5 @@
 import mongoose, {isValidObjectId} from "mongoose"
+import fs from "fs"
 import {Video} from "../models/video.model.js"
 import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
@@ -125,8 +126,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Thumbnail file is required")
     }
 
-    const videoFile = await uploadOnCloudinary(videoFileLocalPath)
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+    // 1. Upload to Cloudinary (preserve local file)
+    const videoFile = await uploadOnCloudinary(videoFileLocalPath, { deleteAfterUpload: false })
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath, { deleteAfterUpload: false })
 
     if (!videoFile) {
         throw new ApiError(400, "Video file upload failed")
@@ -136,21 +138,64 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Thumbnail file upload failed")
     }
 
-    const video = await Video.create({
-        title,
-        description,
-        videoFile: videoFile.url,
-        thumbnail: thumbnail.url,
-        duration: videoFile.duration,
-        owner: req.user._id,
-        isMovie: isMovie === 'true' || isMovie === true, // Handle string 'true' from FormData
-        isPublished: isPublished === undefined ? true : (isPublished === 'true' || isPublished === true)
-    })
+    // 2. Retry logic for Database Entry
+    let createdVideo;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    const createdVideo = await Video.findById(video._id)
+    while (attempts < maxAttempts) {
+        try {
+            const video = await Video.create({
+                title,
+                description,
+                videoFile: videoFile.url,
+                thumbnail: thumbnail.url,
+                duration: videoFile.duration,
+                owner: req.user._id,
+                isMovie: isMovie === 'true' || isMovie === true,
+                isPublished: isPublished === undefined ? true : (isPublished === 'true' || isPublished === true)
+            })
 
-    if (!createdVideo) {
-        throw new ApiError(500, "Something went wrong while uploading the video")
+            createdVideo = await Video.findById(video._id)
+            if (createdVideo) break; // Success
+
+        } catch (error) {
+            console.error(`Database save attempt ${attempts + 1} failed:`, error);
+            attempts++;
+            if (attempts === maxAttempts) {
+                // Determine if we should delete files here or not. 
+                // Request says "if not dn successfully try again", implying we keep trying.
+                // If it ultimately fails, we probably SHOULD delete the file to avoid junk, 
+                // OR keep it for manual intervention. 
+                // Given "remove it... if successfully", implies "don't remove if not successful" immediately?
+                // But usually we don't want to fill disk.
+                // However, I will adhere to "try again" as the retry loop.
+                // If max attempts reached, I will throw error.
+                // Safe default: Delete files on ultimate failure to prevent storage leak, 
+                // unless user specifically wants manual recovery. 
+                // I'll keep them for safety as per "if not sucessfully try again" 
+                // (maybe user implies USER tries again, so file must exist? No, user re-uploads usually).
+                
+                // Let's Clean up on ultimate failure to be a good citizen, 
+                // BUT the prompt "make sure if... successfully then remove" might imply 
+                // "only remove if successful".
+                // I will NOT delete on failure for now to strictly follow "only remove if successful".
+                throw new ApiError(500, "Failed to save video to database after multiple attempts")
+            }
+            // Wait a bit before retry? (Optional, but good practice)
+            await new Promise(resolve => setTimeout(resolve, 500)); 
+        }
+    }
+
+    // 3. Success: Delete local files
+    if (createdVideo) {
+        try {
+            if (fs.existsSync(videoFileLocalPath)) fs.unlinkSync(videoFileLocalPath)
+            if (fs.existsSync(thumbnailLocalPath)) fs.unlinkSync(thumbnailLocalPath)
+        } catch (cleanupError) {
+            console.error("Error cleaning up local files after successful DB save:", cleanupError);
+            // Non-blocking error
+        }
     }
 
     return res.status(201).json(

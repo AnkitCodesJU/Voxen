@@ -8,7 +8,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET 
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (localFilePath, { deleteAfterUpload = true } = {}) => {
     try {
         if (!localFilePath) return null
         
@@ -16,8 +16,9 @@ const uploadOnCloudinary = async (localFilePath) => {
             resource_type: "auto"
         })
         
-        
-        fs.unlinkSync(localFilePath)
+        if (deleteAfterUpload) {
+            fs.unlinkSync(localFilePath)
+        }
         return response;
 
     } catch (error) {
