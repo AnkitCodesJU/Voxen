@@ -18,11 +18,28 @@ interface VideoCardProps {
     views?: number;
     uploadedAt?: Date;
     createdAt?: string;
-    duration?: string;
+    duration?: string | number;
     isLive?: boolean;
     description?: string;
     instructor?: any;
+    owner?: any; // Added to support video owner object
     videoFile?: string; // Added for download support
+}
+
+function formatDuration(duration: string | number | undefined): string {
+    if (typeof duration === 'undefined') return '';
+
+    // If it's already a formatted string (e.g. "10:05"), return it
+    if (typeof duration === 'string' && duration.includes(':')) return duration;
+
+    // Convert seconds to MM:SS
+    const totalSeconds = typeof duration === 'string' ? parseFloat(duration) : duration;
+    if (isNaN(totalSeconds)) return '';
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 export default function VideoCard({
@@ -39,15 +56,17 @@ export default function VideoCard({
     duration,
     isLive = false,
     instructor,
+    owner,
     videoFile
 }: VideoCardProps) {
     const { isLoggedIn } = useAuth();
 
     // Normalize props
     const videoId = _id || id || "";
-    const displayChannelName = channelName || instructor?.fullName || "Instructor";
-    const displayAvatar = channelAvatar || instructor?.avatar || "https://picsum.photos/seed/avatar1/200/200";
-    const displayChannelId = channelId || instructor?._id || "";
+    // Priority: Explicit props -> Owner object -> Instructor object -> Fallback
+    const displayChannelName = channelName || owner?.fullName || instructor?.fullName || "Instructor";
+    const displayAvatar = channelAvatar || owner?.avatar || instructor?.avatar || "https://picsum.photos/seed/avatar1/200/200";
+    const displayChannelId = channelId || owner?._id || instructor?._id || "";
 
     const date = uploadedAt || (createdAt ? new Date(createdAt) : new Date());
 
@@ -103,7 +122,7 @@ export default function VideoCard({
                 />
                 {duration && !isLive && (
                     <div className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-xs font-bold text-white">
-                        {duration}
+                        {formatDuration(duration)}
                     </div>
                 )}
                 {isLive && (

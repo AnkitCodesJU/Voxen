@@ -53,6 +53,30 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 
 
+    // Calculate likes count for sorting or display
+    pipeline.push({
+        $lookup: {
+            from: "likes",
+            localField: "_id",
+            foreignField: "video",
+            as: "likes"
+        }
+    });
+
+    pipeline.push({
+        $addFields: {
+            likesCount: {
+                $size: "$likes"
+            }
+        }
+    });
+
+    pipeline.push({
+        $project: {
+            likes: 0
+        }
+    });
+
     // Sort
     if (sortBy && sortType) {
         pipeline.push({

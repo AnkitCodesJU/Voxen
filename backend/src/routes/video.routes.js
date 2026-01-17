@@ -12,11 +12,12 @@ import {upload} from "../middlewares/multer.middleware.js"
 
 const router = Router();
 
-router.use(verifyJWT); // Apply verifyJWT to all routes
+// router.use(verifyJWT); // Apply verifyJWT to all routes
 
 router.route("/")
     .get(getAllVideos)
     .post(
+        verifyJWT,
         upload.fields([
             {
                 name: "videoFile",
@@ -32,10 +33,10 @@ router.route("/")
     );
 
 router.route("/:videoId")
-    .get(getVideoById)
-    .delete(deleteVideo)
-    .patch(upload.single("thumbnail"), updateVideo);
+    .get(getVideoById) // Check if this handles unauthenticated users gracefully
+    .delete(verifyJWT, deleteVideo)
+    .patch(verifyJWT, upload.single("thumbnail"), updateVideo);
 
-router.route("/toggle/publish/:videoId").patch(togglePublishStatus);
+router.route("/toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus);
 
 export default router

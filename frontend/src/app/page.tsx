@@ -10,23 +10,35 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchClasses = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get("/live-classes");
-        if (response.data.success) {
-          const allVideoData = response.data.data;
-          const live = allVideoData.filter((v: any) => v.status === "LIVE");
-          const others = allVideoData.filter((v: any) => v.status !== "LIVE");
+        const [liveRes, videoRes] = await Promise.all([
+          api.get("/live-classes"),
+          api.get("/videos?sortBy=likesCount&sortType=desc&limit=20"),
+        ]);
+
+        if (liveRes.data.success) {
+          const allVideoData = liveRes.data.data;
+          // Filter live classes if the endpoint returns mixed content, or just take them if dedicated
+          // Preserving existing filter logic just in case
+          const live = Array.isArray(allVideoData)
+            ? allVideoData.filter((v: any) => v.status === "LIVE")
+            : [];
           setLiveClasses(live);
-          setVodVideos(others);
+        }
+
+        if (videoRes.data.success) {
+          // aggregatePaginate returns object with docs
+          const videos = videoRes.data.data.docs;
+          setVodVideos(videos);
         }
       } catch (error) {
-        console.error("Failed to fetch live classes", error);
+        console.error("Failed to fetch home page data", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchClasses();
+    fetchData();
   }, []);
 
   if (loading) {
