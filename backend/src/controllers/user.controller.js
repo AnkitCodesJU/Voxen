@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose, { isValidObjectId } from "mongoose";
+import { createNotification } from "./notification.controller.js";
 
 const generateAccessAndRefreshTokens = async(userId) =>{
     try {
@@ -147,6 +148,15 @@ const loginUser = asyncHandler( async (req, res) => {
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+    // Create login notification record
+    // Using user._id as both recipient and sender (or null sender) to indicate system event
+    await createNotification(
+        user._id,
+        user._id, 
+        'LOGIN',
+        `New login detected on ${new Date().toLocaleString()}`
+    );
 
     const options = {
         httpOnly: true,

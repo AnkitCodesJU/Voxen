@@ -3,6 +3,8 @@ import {Like} from "../models/like.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
+import {createNotification} from "./notification.controller.js"
+import {Video} from "../models/video.model.js"
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
     const {videoId} = req.params
@@ -28,6 +30,18 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         video: videoId,
         likedBy: req.user?._id
     })
+
+    // Notify video owner
+    const video = await Video.findById(videoId);
+    if (video) {
+        await createNotification(
+            video.owner,
+            req.user._id,
+            'LIKE',
+            `${req.user.fullName} liked your video: ${video.title}`,
+            video._id
+        );
+    }
     
     return res
     .status(200)

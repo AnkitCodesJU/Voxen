@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, Bell, Menu, X } from "lucide-react";
+import { Search, Menu, X } from "lucide-react";
+import NotificationDropdown from "./NotificationDropdown";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
@@ -104,8 +105,8 @@ export default function Navbar() {
                     </div>
                     {isLoggedIn ? (
                         <>
-                            <div className="hidden sm:block text-gray-300 hover:text-white cursor-pointer">
-                                <Bell className="w-5 h-5" />
+                            <div className="hidden sm:block">
+                                <NotificationDropdown />
                             </div>
                             <div className="flex items-center gap-2 cursor-pointer group relative">
                                 <div

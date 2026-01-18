@@ -6,6 +6,8 @@ import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {createNotification} from "./notification.controller.js"
+import {Subscription} from "../models/subscription.model.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -219,6 +221,24 @@ const publishAVideo = asyncHandler(async (req, res) => {
         } catch (cleanupError) {
             console.error("Error cleaning up local files after successful DB save:", cleanupError);
             // Non-blocking error
+        }
+    }
+
+    // 4. Notify Subscribers
+    if (createdVideo) {
+        // Find all subscribers
+        const subscribers = await Subscription.find({ channel: req.user._id });
+        
+        // Create notifications for each subscriber
+        // Note: For large scale, this should be a background job
+        for (const sub of subscribers) {
+            await createNotification(
+                sub.subscriber,
+                req.user._id,
+                'NEW_VIDEO',
+                `${req.user.fullName} uploaded: ${createdVideo.title}`,
+                createdVideo._id
+            );
         }
     }
 

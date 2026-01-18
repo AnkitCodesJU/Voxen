@@ -3,6 +3,8 @@ import {Comment} from "../models/comment.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
+import {createNotification} from "./notification.controller.js"
+import {Video} from "../models/video.model.js"
 
 const getVideoComments = asyncHandler(async (req, res) => {
     //TODO: get all comments for a video
@@ -94,6 +96,19 @@ const addComment = asyncHandler(async (req, res) => {
 
     if(!comment){
         throw new ApiError(500, "Failed to add comment")
+    }
+
+    // Notify video owner
+    const video = await Video.findById(videoId);
+    if (video) {
+        await createNotification(
+            video.owner,
+            req.user._id,
+            'COMMENT',
+            `${req.user.fullName} commented on your video: ${video.title}`,
+            video._id,
+            comment._id
+        );
     }
 
     return res
