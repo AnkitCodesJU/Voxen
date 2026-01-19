@@ -11,7 +11,7 @@ import {Subscription} from "../models/subscription.model.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+    const { page = 1, limit = 10, query, sortBy, sortType, userId, username } = req.query
     //TODO: get all videos based on query, sort, pagination
 
     const pipeline = [];
@@ -38,6 +38,21 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 owner: new mongoose.Types.ObjectId(userId)
             }
         });
+    } else if (username) {
+        // Filter by username if userId is not provided
+        const user = await User.findOne({ username: username.toLowerCase() });
+        if (user) {
+            pipeline.push({
+                $match: {
+                    owner: user._id
+                }
+            });
+        } else {
+             // User not found, return empty result strictly
+             return res.status(200).json(
+                new ApiResponse(200, { docs: [], totalDocs: 0, limit, page, totalPages: 0 }, "User not found")
+            );
+        }
     }
 
     // Only show published videos unless it's the owner viewing their own videos (logic can be complex, for now strictly published for public list)

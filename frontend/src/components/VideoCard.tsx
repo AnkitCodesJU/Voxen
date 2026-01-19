@@ -66,6 +66,9 @@ export default function VideoCard({
     // Priority: Explicit props -> Owner object -> Instructor object -> Fallback
     const displayChannelName = channelName || owner?.fullName || instructor?.fullName || "Instructor";
     const displayAvatar = channelAvatar || owner?.avatar || instructor?.avatar || "https://picsum.photos/seed/avatar1/200/200";
+
+    // Prefer username for pretty URLs, fallback to ID if necessary (though route will be username based)
+    const displayUsername = owner?.username || instructor?.username || "";
     const displayChannelId = channelId || owner?._id || instructor?._id || "";
 
     const date = uploadedAt || (createdAt ? new Date(createdAt) : new Date());
@@ -75,7 +78,8 @@ export default function VideoCard({
         ? `/login?redirect_url=/live/${videoId}`
         : (isLive ? `/live/${videoId}` : `/watch/${videoId}`);
 
-    const channelUrl = displayChannelId ? `/channel/${displayChannelId}` : "#";
+    // Link to /channel/:username if available, else #
+    const channelUrl = displayUsername ? `/channel/${displayUsername}` : (displayChannelId ? `/channel/${displayChannelId}` : "#");
 
     const [showMenu, setShowMenu] = useState(false);
 
