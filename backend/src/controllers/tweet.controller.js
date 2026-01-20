@@ -104,9 +104,85 @@ const deleteTweet = asyncHandler(async (req, res) => {
     );
 });
 
+const getAllTweets = asyncHandler(async (req, res) => {
+    const tweets = await Tweet.find({ isPublished: true }).sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, tweets, "All tweets fetched successfully")
+    );
+});
+
 export {
     createTweet,
     getUserTweets,
     updateTweet,
-    deleteTweet
+    deleteTweet,
+    getAllTweets,
+    getTweetById
 };
+
+const getTweetById = asyncHandler(async (req, res) => {
+    const { tweetId } = req.params;
+
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, "Invalid tweet id");
+    }
+
+    const tweet = await Tweet.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(tweetId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            fullName: 1,
+                            username: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                owner: {
+                    $first: "$owner"
+                },
+                likesCount: {
+                    $size: "$likes"
+                },
+                isLiked: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        }
+    ]);
+
+    if (!tweet?.length) {
+        throw new ApiError(404, "Tweet not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, tweet[0], "Tweet fetched successfully")
+    );
+});

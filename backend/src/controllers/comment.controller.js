@@ -168,5 +168,105 @@ export {
     getVideoComments, 
     addComment, 
     updateComment,
-    deleteComment
+    deleteComment,
+    getTweetComments,
+    addTweetComment
+}
+
+const getTweetComments = asyncHandler(async (req, res) => {
+    const { tweetId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const commentsAggregate = Comment.aggregate([
+        {
+            $match: {
+                tweet: new mongoose.Types.ObjectId(tweetId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "comment",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                owner: {
+                    $first: "$owner"
+                },
+                likesCount: {
+                    $size: "$likes"
+                },
+                isLiked: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        }
+    ]);
+
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10)
+    };
+
+    const comments = await Comment.aggregatePaginate(commentsAggregate, options);
+
+    return res.status(200).json(
+        new ApiResponse(200, comments, "Tweet comments fetched successfully")
+    );
+});
+
+const addTweetComment = asyncHandler(async (req, res) => {
+    const { tweetId } = req.params;
+    const { content } = req.body;
+
+    if (!content) {
+        throw new ApiError(400, "Content is required");
     }
+
+    const comment = await Comment.create({
+        content,
+        tweet: tweetId,
+        owner: req.user?._id
+    });
+
+    if (!comment) {
+        throw new ApiError(500, "Failed to add comment");
+    }
+
+    // Notify tweet owner (assuming Tweet model exists)
+    // const tweet = await Tweet.findById(tweetId);
+    // if (tweet) { ... }
+
+    return res.status(201).json(
+        new ApiResponse(201, comment, "Comment added successfully")
+    );
+});

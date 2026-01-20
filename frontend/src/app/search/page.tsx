@@ -10,12 +10,13 @@ import Navbar from "@/components/Navbar";
 interface SearchResults {
     videos: any[];
     liveClasses: any[];
+    tweets: any[];
 }
 
 export default function SearchPage() {
     const searchParams = useSearchParams();
     const query = searchParams.get("q");
-    const [results, setResults] = useState<SearchResults>({ videos: [], liveClasses: [] });
+    const [results, setResults] = useState<SearchResults>({ videos: [], liveClasses: [], tweets: [] });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -43,7 +44,7 @@ export default function SearchPage() {
         );
     }
 
-    const hasResults = results.videos.length > 0 || results.liveClasses.length > 0;
+    const hasResults = results.videos.length > 0 || results.liveClasses.length > 0 || results.tweets.length > 0;
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -101,6 +102,30 @@ export default function SearchPage() {
                                     </div>
                                     <h3 className="text-sm font-semibold text-gray-200 group-hover:text-white truncate">{item.title}</h3>
                                     <p className="text-xs text-gray-400 mt-1">{item.views} views</p>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Posts Section */}
+                {results.tweets.length > 0 && (
+                    <div className="mb-12">
+                        <h2 className="text-xl font-bold mb-4">Posts</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {results.tweets.map((tweet) => (
+                                <Link key={tweet._id} href={`/posts/${tweet._id}`} className="block">
+                                    <div className="border border-zinc-800 rounded-lg p-4 bg-zinc-900/50 hover:bg-zinc-900 transition flex flex-col gap-4 h-full">
+                                        {tweet.image && (
+                                            <img src={tweet.image} alt="Post image" className="w-full h-48 object-cover rounded-md" />
+                                        )}
+                                        <div>
+                                            <p className="text-gray-200 mb-2 line-clamp-3">{tweet.content}</p>
+                                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                <span>{new Date(tweet.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </Link>
                             ))}
                         </div>
