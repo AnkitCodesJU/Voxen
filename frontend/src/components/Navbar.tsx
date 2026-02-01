@@ -52,16 +52,14 @@ export default function Navbar() {
                         <Link href="/" className="text-sm font-medium text-foreground hover:text-gray-300 transition">
                             Home
                         </Link>
-                        <Link href="/series" className="text-sm font-medium text-gray-300 hover:text-white transition">
-                            TV Shows
-                        </Link>
+
                         <Link href="/movies" className="text-sm font-medium text-gray-300 hover:text-white transition">
                             Movies
                         </Link>
                         <Link href="/live" className="text-sm font-medium text-primary hover:text-red-400 transition animate-pulse">
                             Live
                         </Link>
-                        <Link href="/my-list" className="text-sm font-medium text-gray-300 hover:text-white transition">
+                        <Link href="/watch-later" className="text-sm font-medium text-gray-300 hover:text-white transition">
                             My List
                         </Link>
                     </div>
@@ -166,7 +164,7 @@ export default function Navbar() {
                 <div className="md:hidden bg-zinc-900 absolute top-full left-0 w-full p-4 flex flex-col gap-4 shadow-lg border-t border-zinc-800">
                     <Link href="/" className="text-white hover:text-primary">Home</Link>
                     <Link href="/live" className="text-primary font-bold">Live</Link>
-                    <Link href="/my-list" className="text-gray-300">My List</Link>
+                    <Link href="/watch-later" className="text-gray-300">My List</Link>
                     {!isLoggedIn && (
                         <Link href="/login" className="text-white bg-primary px-4 py-2 rounded text-center">Sign In</Link>
                     )}
