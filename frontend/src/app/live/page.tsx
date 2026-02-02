@@ -3,11 +3,25 @@
 import React, { useEffect, useState } from "react";
 import VideoCard from "@/components/VideoCard";
 import api from "@/lib/axios";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function LiveClassPage() {
     const [liveClasses, setLiveClasses] = useState<any[]>([]);
     const [scheduledClasses, setScheduledClasses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
+    const router = useRouter();
+
+    const handleStartClass = async (classId: string) => {
+        try {
+            await api.patch(`/live-classes/${classId}/start`);
+            router.push(`/live/${classId}`);
+        } catch (error) {
+            console.error("Failed to start class", error);
+            alert("Failed to start class");
+        }
+    };
 
     useEffect(() => {
         const fetchClasses = async () => {
@@ -75,7 +89,20 @@ export default function LiveClassPage() {
                     {scheduledClasses.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
                             {scheduledClasses.map((video) => (
-                                <VideoCard key={video._id} {...video} isLive={false} />
+                                <div key={video._id} className="relative group">
+                                    <VideoCard {...video} isLive={false} />
+                                    {user?._id === video.instructor?._id && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleStartClass(video._id);
+                                            }}
+                                            className="absolute top-3 left-3 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-xl z-20 transition transform hover:scale-105"
+                                        >
+                                            Start Class
+                                        </button>
+                                    )}
+                                </div>
                             ))}
                         </div>
                     ) : (

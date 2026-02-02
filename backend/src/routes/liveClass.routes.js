@@ -14,8 +14,10 @@ const router = Router();
 router.route("/").get(getLiveClasses);
 router.route("/:liveClassId").get(getLiveClassById);
 
+import { upload } from "../middlewares/multer.middleware.js";
+
 // Secured routes
-router.route("/create").post(verifyJWT, createLiveClass);
+router.route("/create").post(verifyJWT, upload.single("thumbnail"), createLiveClass);
 router.route("/:liveClassId/start").patch(verifyJWT, startLiveClass);
 router.route("/:liveClassId/end").patch(verifyJWT, endLiveClass);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Upload, X, Image as ImageIcon, FileVideo, FileText, Radio, Lock, Globe } from "lucide-react";
 import api from "@/lib/axios";
@@ -12,7 +12,9 @@ type Tab = "video" | "post" | "live";
 export default function UploadPage() {
     const { user } = useAuth();
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<Tab>("video");
+    const searchParams = useSearchParams();
+    const initialTab = (searchParams.get("tab") as Tab) || "video";
+    const [activeTab, setActiveTab] = useState<Tab>(initialTab);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState("");
 
@@ -33,13 +35,15 @@ export default function UploadPage() {
     const [liveTitle, setLiveTitle] = useState("");
     const [liveDesc, setLiveDesc] = useState("");
     const [liveTime, setLiveTime] = useState("");
+    const [liveThumb, setLiveThumb] = useState<File | null>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "video" | "thumb" | "postImage") => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "video" | "thumb" | "postImage" | "liveThumb") => {
         const file = e.target.files?.[0];
         if (file) {
             if (type === "video") setVideoFile(file);
             else if (type === "thumb") setVideoThumb(file);
             else if (type === "postImage") setPostImage(file);
+            else if (type === "liveThumb") setLiveThumb(file);
         }
     };
 
@@ -107,11 +111,15 @@ export default function UploadPage() {
         }
 
         setUploading(true);
+        const formData = new FormData();
+        formData.append("title", liveTitle);
+        formData.append("description", liveDesc);
+        formData.append("startTime", liveTime);
+        if (liveThumb) formData.append("thumbnail", liveThumb);
+
         try {
-            await api.post("/live-classes", {
-                title: liveTitle,
-                description: liveDesc,
-                startTime: liveTime
+            await api.post("/live-classes/create", formData, {
+                headers: { "Content-Type": "multipart/form-data" }
             });
             router.push("/dashboard");
         } catch (err: any) {
@@ -270,6 +278,19 @@ export default function UploadPage() {
                             </div>
                             <input type="text" value={liveTitle} onChange={(e) => setLiveTitle(e.target.value)} placeholder="Live Class Title" className="w-full bg-zinc-800 border-none rounded p-3 text-white focus:ring-2 focus:ring-red-600" />
                             <textarea value={liveDesc} onChange={(e) => setLiveDesc(e.target.value)} placeholder="Description" rows={3} className="w-full bg-zinc-800 border-none rounded p-3 text-white focus:ring-2 focus:ring-red-600 resize-none" />
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-300">Thumbnail (Optional)</label>
+                                <div className={cn(
+                                    "border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center transition hover:border-red-500 hover:bg-zinc-800/50 cursor-pointer",
+                                    liveThumb && "border-green-500 bg-green-500/5"
+                                )}>
+                                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, "liveThumb")} className="hidden" id="live-thumb" />
+                                    <label htmlFor="live-thumb" className="cursor-pointer flex flex-col items-center">
+                                        {liveThumb ? <p className="text-green-400 truncate w-full">{liveThumb.name}</p> : <><ImageIcon className="w-8 h-8 mb-2 text-zinc-500" /><span className="text-xs text-zinc-500">Select Thumbnail</span></>}
+                                    </label>
+                                </div>
+                            </div>
 
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-300">Start Time</label>

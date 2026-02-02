@@ -12,10 +12,21 @@ const createLiveClass = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Title and Start Time are required");
     }
 
+    let thumbnailUrl = "https://images.unsplash.com/photo-1536240478700-b869060f5c79?q=80&w=2000&auto=format&fit=crop"; // Default
+
+    if (req.file) {
+        const thumbnailLocalPath = req.file.path;
+        const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+        if (thumbnail?.url) {
+            thumbnailUrl = thumbnail.url;
+        }
+    }
+
     const liveClass = await LiveClass.create({
         title,
         description,
         startTime,
+        thumbnail: thumbnailUrl,
         instructor: req.user._id,
         status: "SCHEDULED"
     });

@@ -105,7 +105,7 @@ export default function DashboardPage() {
                     Upload Video
                 </Link>
                 <Link
-                    href="/live"
+                    href="/dashboard/upload?tab=live"
                     className="flex items-center gap-2 bg-red-600 px-6 py-3 rounded-md hover:bg-red-700 transition"
                 >
                     <Radio className="w-5 h-5" />
