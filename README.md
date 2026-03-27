@@ -1,3 +1,59 @@
+# 🔐 Full SSH + Git Setup Guide (With File Name Checks)
+
+## ✅ Step 1 — Check Git
+git --version
+
+## ✅ Step 2 — Check SSH
+ssh -V
+
+## ✅ Step 3 — Generate SSH Key (Only Once)
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+Press ENTER when asked for file location.
+
+Files created:
+~/.ssh/id_ed25519        (private key)
+~/.ssh/id_ed25519.pub    (public key)
+
+## 🔥 Step 4 — Verify File Names
+ls -al ~/.ssh
+
+Expected:
+id_ed25519
+id_ed25519.pub
+known_hosts
+
+## 🚀 Step 5 — Start SSH Agent
+eval "$(ssh-agent -s)"
+
+## 🔑 Step 6 — Add Private Key
+ssh-add ~/.ssh/id_ed25519
+
+## 📋 Step 7 — Copy Public Key
+cat ~/.ssh/id_ed25519.pub
+
+Copy the full output.
+
+## 🌐 Step 8 — Add to GitHub
+Go to: https://github.com/settings/keys  
+Click "New SSH Key" → Paste → Save
+
+## 🔌 Step 9 — Test Connection
+ssh -T git@github.com
+
+Type "yes" if prompted.
+
+## 📦 Step 10 — Clone Repo
+git clone git@github.com:username/repo.git
+
+## 🎯 Done
+SSH is set up. No password needed for GitHub 🎉
+
+## ⚠️ Notes
+- Never share id_ed25519 (private key)
+- Public key (.pub) is safe
+- Use ls ~/.ssh if confused
+
 # Voxen 🎥
 
 **Voxen** is a full-featured video streaming and social media platform that combines the best of video sharing with community interaction. Built with a modern tech stack, it offers a seamless experience for creators and viewers alike.
