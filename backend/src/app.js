@@ -50,6 +50,7 @@ app.use("/api/v1/notifications", notificationRouter)
 
 // Global Error Handler
 app.use((err, req, res, next) => {
+    console.error("API Error:", err);
     if (err instanceof ApiError) {
         return res.status(err.statusCode).json({
             success: false,
