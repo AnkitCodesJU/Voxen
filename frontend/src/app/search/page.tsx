@@ -13,7 +13,7 @@ interface SearchResults {
     tweets: any[];
 }
 
-export default function SearchPage() {
+function SearchContent() {
     const searchParams = useSearchParams();
     const query = searchParams.get("q");
     const [results, setResults] = useState<SearchResults>({ videos: [], liveClasses: [], tweets: [] });
@@ -133,6 +133,16 @@ export default function SearchPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+import { Suspense } from "react";
+
+export default function SearchPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-red-600" /></div>}>
+            <SearchContent />
+        </Suspense>
     );
 }
 

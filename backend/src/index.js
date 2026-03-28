@@ -6,7 +6,7 @@ import { initializeSocketIO } from "./socket/index.js";
 
 const httpServer = createServer(app);
 initializeSocketIO(httpServer);
-
+console.log("URI:", process.env.MONGODB_URI);
 connectDB()
 .then(() => {
     httpServer.listen(process.env.PORT || 8000, () => {

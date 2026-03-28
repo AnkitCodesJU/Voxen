@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 type Tab = "video" | "post" | "live";
 
-export default function UploadPage() {
+function UploadContent() {
     const { user } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -310,5 +310,15 @@ export default function UploadPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+import { Suspense } from "react";
+
+export default function UploadPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-black text-white p-4 md:p-8 flex justify-center items-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div></div>}>
+            <UploadContent />
+        </Suspense>
     );
 }
