@@ -32,6 +32,10 @@ import tweetRouter from './routes/tweet.routes.js'
 import notificationRouter from './routes/notification.routes.js'
 
 //routes declaration
+app.get("/", (req, res) => {
+    res.json({ message: "API running Successfully" });
+});
+
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/live-classes", liveClassRouter)
 app.use("/api/v1/search", searchRouter)
